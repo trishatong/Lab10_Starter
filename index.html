@@ -14,6 +14,7 @@
   <!-- Main Stylesheet & Scripts -->
   <link rel="stylesheet" href="assets/styles/global.css" />
   <script src="assets/scripts/partyHorn.js" type="module"></script>
+  <script src="https://unpkg.com/launchdarkly-js-client-sdk@3"></script>
 </head>
 
 <body>
@@ -42,6 +43,55 @@
       <audio class="hidden" src=""></audio>
     </section>
   </main>
+  <script>
+    function main()
+    {
+      // Set clientSideID to your LaunchDarkly client-side ID
+      const clientSideID = '6480b1ea70e0c91307ec8fea';
+
+      // Set flagKey to the feature flag key you want to evaluate
+      const flagKey = 'blue-background';
+
+      // Set up the context properties. This context should appear on your
+      // LaunchDarkly contexts dashboard soon after you run the demo.
+      const context = {
+        kind: 'user',
+        key: 'example-context-key',
+        name: 'Sandy'
+      };
+
+      var div = document.createElement('div');
+      document.body.appendChild(div);
+      div.appendChild(document.createTextNode('Initializing...'));
+
+      const ldclient = LDClient.initialize(clientSideID, context);
+
+      function render() {
+        const flagValue = ldclient.variation(flagKey, false);
+        const label = 'Feature flag ' + flagKey + ' is ' + flagValue + ' for this context';
+        div.replaceChild(document.createTextNode(label), div.firstChild);
+      }
+
+      ldclient.on('initialized', () => {
+        div.appendChild(document.createTextNode('SDK successfully initialized!'), div.firstChild);
+      });
+      ldclient.on('failed', () => {
+        div.appendChild(document.createTextNode('SDK failed to initialize'), div.firstChild);
+      });
+      ldclient.on('ready', render);
+      ldclient.on('change', render);
+
+
+      // Here we ensure that the SDK shuts down cleanly and has a chance
+      // to deliver analytics envets to LaunchDarkly before the program
+      // exits. If analytics events are not delivered, the context properties
+      // and flag usage statistics will not appear on your dashboard.
+      // In a normal long-running application, the SDK would continue
+      // running and events would be delivered automatically in the background.
+      ldclient.close();
+    }
+    main();
+    </script>
 </body>
 
 </html>
